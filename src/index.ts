@@ -6,9 +6,9 @@ import { generateTelegramHash } from './generateTelegramHash';
 import * as jwt from 'jsonwebtoken';
 
 const TEXT_WELCOME =
-  'Save CROAK and get the chance to win a free Efrog by getting the froglet to the other side of the pond. 🐸 Brought to you by Locker';
-const TEXT_LINK = 'Play now';
-const EFROGR_URL = 'https://efrogr.locker.money';
+  '🐸 Hop on this froggy classic \n\n- Play everyday for a chance at JACKPOT 💰\n- Save CROAK every time you play 🤑 \n\nMade by Locker (https://x.com/locker_money)';
+const TEXT_LINK = '🏆 Play now 🏆';
+const EFROGR_URL = process.env.EFROGR_URL || 'https://efrogr.locker.money';
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const ENVIRONMENT = process.env.NODE_ENV || '';
