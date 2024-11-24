@@ -5,8 +5,6 @@ import { development, production } from './core';
 import { generateTelegramHash } from './generateTelegramHash';
 import * as jwt from 'jsonwebtoken';
 
-const TEXT_WELCOME =
-  '🐸 Hop on this froggy classic \n\n- Play everyday for a chance at JACKPOT 💰\n- Save CROAK every time you play 🤑 \n\nMade by Locker (https://x.com/locker_money)';
 const TEXT_LINK = '🏆 Play now 🏆';
 const EFROGR_URL = process.env.EFROGR_URL || 'https://efrogr.locker.money';
 
@@ -19,6 +17,10 @@ if (!BOT_TOKEN) {
 }
 
 const bot = new Telegraf(BOT_TOKEN);
+
+function getWelcomeText(firstName: string) {
+  return `Croak croak ${firstName}\\! \n\n*Welcome to Efrogr*\n\n🐸 Hop faster than your frens\n💰 Daily jackpot \n🤑 Lock\\-up and save CROAK\n🏦Grow the Efrogs treasury  \n\n*Play \\-\\> Save \\-\\> Win*`;
+}
 
 bot.start((ctx) => {
   const userData = {
@@ -49,8 +51,8 @@ bot.start((ctx) => {
 
   const url = `${EFROGR_URL}/?telegramAuthToken=${encodedTelegramAuthToken}`;
   console.log('[URL] url generated for user', url);
-  ctx.reply(
-    TEXT_WELCOME,
+  ctx.replyWithMarkdownV2(
+    getWelcomeText(userData.firstName),
     Markup.inlineKeyboard([Markup.button.webApp(TEXT_LINK, url)]),
   );
 });
