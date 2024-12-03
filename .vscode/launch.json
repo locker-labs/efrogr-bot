@@ -2,19 +2,19 @@
   "version": "0.1.0",
   "configurations": [
     {
-      "name": "Gator-Chomp: debug server-side",
+      "name": "Efrogr Bot",
       "type": "node-terminal",
       "request": "launch",
       "command": "yarn dev"
     },
     {
-      "name": "Gator-Chomp: debug client-side",
+      "name": "Efrogr Bot",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Gator-Chomp: debug full stack",
+      "name": "Efrogr Bot",
       "type": "node-terminal",
       "request": "launch",
       "command": "yarn dev",

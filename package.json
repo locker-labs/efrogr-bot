@@ -27,6 +27,7 @@
     "devWindows": "@powershell -Command $env:DEBUG='bot*';dotenv -- -- nodemon -e ts -x ts-node src/index.ts",
     "build": "ncc build src/index.ts -o public -m",
     "prettier": "prettier --write 'src/**/*.ts'",
-    "lint": "tsc --noemit"
+    "lint": "tsc --noemit",
+    "send:daily-jackpot": "dotenv -- nodemon -e ts -x ts-node scripts/daily-jackpot.ts"
   }
 }

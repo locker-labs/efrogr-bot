@@ -19,7 +19,7 @@ if (!BOT_TOKEN) {
 const bot = new Telegraf(BOT_TOKEN);
 
 function getWelcomeText(firstName: string) {
-  return `Croak croak ${firstName}\\! \n\n*Welcome to Efrogr*\n\n🐸 Hop faster than your frens\n💰 Daily jackpot \n🤑 Lock\\-up and save CROAK\n🏦Grow the Efrogs treasury  \n\n*Play \\-\\> Save \\-\\> Win*`;
+  return `Croak croak ${firstName}\\! \n\n*Welcome to Efrogr*\n\n🐸 Hop faster than your frens\n💰 Daily jackpot \n🤑 Lock\\-up and save CROAK\n\n*Play \\-\\> Save \\-\\> Win*`;
 }
 
 bot.start((ctx) => {
