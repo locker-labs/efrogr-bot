@@ -18,8 +18,8 @@ if (!BOT_TOKEN) {
 
 const bot = new Telegraf(BOT_TOKEN);
 
-function getWelcomeText(firstName: string) {
-  return `Croak croak ${firstName}\\! \n\n*Welcome to Efrogr*\n\n🐸 Hop faster than your frens\n💰 Daily jackpot \n🤑 Lock\\-up and save CROAK\n\n*Play \\-\\> Save \\-\\> Win*`;
+function getWelcomeText() {
+  return `Croak croak\\! \n\n*Welcome to Efrogr*\n\n🐸 Hop faster than your frens\n💰 Daily jackpot \n🤑 Lock\\-up and save CROAK\n\n*Play \\-\\> Save \\-\\> Win*`;
 }
 
 bot.start((ctx) => {
@@ -52,7 +52,7 @@ bot.start((ctx) => {
   const url = `${EFROGR_URL}/?telegramAuthToken=${encodedTelegramAuthToken}`;
   console.log('[URL] url generated for user', url);
   ctx.replyWithMarkdownV2(
-    getWelcomeText(userData.firstName),
+    getWelcomeText(),
     Markup.inlineKeyboard([Markup.button.webApp(TEXT_LINK, url)]),
   );
 });
