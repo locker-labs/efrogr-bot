@@ -21,8 +21,7 @@ const message = `Giveaway Dec 17, 2024
 Jealous? Play more. 🎮
 
 ===================================
-- Proof: https://lineascan.build/tx/0x46535f9a859de72afcf4d80d2ffcad6caaa3d9376267d1821bde0f839c404cfc
-- Unsubscribe: Send a message to @locker_money if you don't want to receive any more notifications`;
+- Proof: https://lineascan.build/tx/0x46535f9a859de72afcf4d80d2ffcad6caaa3d9376267d1821bde0f839c404cfc`;
 
 const sendNotifications = async () => {
   for (const recipient of recipients) {
