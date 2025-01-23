@@ -4,6 +4,7 @@
     "target": "esnext",
     "moduleResolution": "node",
     "module": "commonjs",
+    "esModuleInterop": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "outDir": "public",

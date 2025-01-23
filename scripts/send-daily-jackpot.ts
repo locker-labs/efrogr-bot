@@ -7,7 +7,6 @@ import supabase from '../lib/db/supabase';
 import { type GameplayEntry } from '../lib/types';
 import { CROAK_ADDRESS, JACKPOT_ADDRESS } from '../lib/constants';
 import { addCommasToNumber } from '../lib/utils';
-// import { mockGameplayEntryData } from '../lib/db/mock-data';
 
 if (!process.env.BOT_TOKEN) {
   console.error('Please add BOT_TOKEN to the .env file');
@@ -30,7 +29,7 @@ const bot = new Telegraf(BOT_TOKEN);
 const TEXT_LINK = '💵 Play Now 💵';
 const EFROGR_URL = 'https://efrogr.locker.money';
 const today = moment().utc();
-const days = today.clone().day() === 1 ? 2 : 1;
+const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
 const GIVEAWAY_DATE_START = today.clone().subtract(days, 'days').startOf('day');
 const GIVEAWAY_DATE_END = today.clone().subtract(1, 'day').endOf('day');
 
@@ -55,23 +54,12 @@ async function getJackpotEntries() {
     .gte('play_date', GIVEAWAY_DATE_START.toISOString())
     .lt('play_date', GIVEAWAY_DATE_END.toISOString());
 
-  // TESTING
-  // const entries = mockGameplayEntryData;
-  // const error = null;
-
   if (error) {
     console.error(
       'Failed to get efrogr_plays_stats from db\n',
       JSON.stringify(error),
     );
-    throw new Error('Failed to get efrogr_plays_stats from db');
-  }
-
-  if (!entries || entries.length === 0) {
-    console.log(
-      `No entries found for ${GIVEAWAY_DATE_START.format('YYYY-MM-DD')}. Exiting...`,
-    );
-    process.exit(0);
+    throw new Error('Failed to get efrogr_plays_stats from db', error);
   }
 
   return entries as GameplayEntry[];
@@ -97,12 +85,6 @@ function getRandomWinner(entries: GameplayEntry[]): GameplayEntry {
   throw new Error('Failed to find winner');
 }
 
-function getJackpotAmount(entries: GameplayEntry[]): number {
-  return entries.reduce((total, entry) => {
-    return total + entry.croak_used;
-  }, 0);
-}
-
 async function sendNotifications(message: string, entries: GameplayEntry[]) {
   for (const entry of entries) {
     const tg_id = entry.tg_id;
@@ -119,70 +101,71 @@ async function sendNotifications(message: string, entries: GameplayEntry[]) {
   }
 }
 
-async function sendJackpotToWinner(winner: GameplayEntry, amount: number) {
+async function sendJackpot(recipientAddress: string) {
   // TODO: create a db entry to save the jackpot winner?
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-  const recipientAddress = winner.address;
-  const tokenAddress = CROAK_ADDRESS; // ERC20 token contract address
-  const amountToSend = ethers.parseUnits(String(amount), 18); // Amount to send in wei
+    const erc20Abi = [
+      'function transfer(address to, uint amount) public returns (bool)',
+      'function balanceOf(address owner) view returns (uint256)',
+    ];
 
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+    const tokenContract = new ethers.Contract(CROAK_ADDRESS, erc20Abi, wallet);
 
-  const erc20Abi = [
-    'function transfer(address to, uint amount) public returns (bool)',
-    'function balanceOf(address owner) view returns (uint256)',
-  ];
-
-  const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, wallet);
-
-  async function getTokenBalance(walletAddress: string): Promise<number> {
-    try {
-      const balance = await tokenContract.balanceOf(walletAddress);
-      return parseInt(ethers.formatUnits(balance, 18)); // assuming CROAK is used in whole numbers
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-      throw error;
-    }
-  }
-
-  async function sendTokens() {
-    try {
-      const tx = await tokenContract.transfer(recipientAddress, amountToSend);
-      console.log('Transaction hash:', tx.hash);
-
-      const receipt = await tx.wait();
-      console.log('Transaction was mined in block:', receipt.blockNumber);
-      return tx.hash;
-    } catch (error) {
-      console.error('Error sending tokens:', error);
-    }
-  }
-
-  const balance = await getTokenBalance(wallet.address);
-  if (balance < amount) {
-    console.error(
-      `Insufficient CROAK balance in JACKPOT_ADDRESS ${JACKPOT_ADDRESS} to send tokens`,
+    const balance = parseInt(
+      ethers.formatUnits(await tokenContract.balanceOf(JACKPOT_ADDRESS), 18),
     );
-    process.exit(1);
+    console.log('Jackpot wallet balance:', balance);
+
+    if (balance === 0) {
+      console.error(
+        `CROAK balance in JACKPOT_ADDRESS ${JACKPOT_ADDRESS} is ${balance}`,
+      );
+      throw new Error(
+        `CROAK balance in JACKPOT_ADDRESS ${JACKPOT_ADDRESS} is ${balance}`,
+      );
+    }
+
+    console.log('Sending jackpot to:', recipientAddress);
+
+    const tx = await tokenContract.transfer(recipientAddress, balance);
+    console.log('Transaction hash:', tx.hash);
+
+    const receipt = await tx.wait();
+    console.log('Transaction was mined in block:', receipt.blockNumber);
+
+    return { txHash: tx.hash, jackpotAmount: balance };
+  } catch (error) {
+    console.error(`Error in sending jackpot to ${recipientAddress}:`, error);
+    throw new Error(
+      `Error in sending jackpot to ${recipientAddress}: ${error}`,
+    );
   }
-  return sendTokens();
 }
 
 export async function distributeJackpot() {
   if (today.clone().day() === 7) {
     return { message: 'Not to be run on Sunday' };
   }
+
   const entries = await getJackpotEntries();
+  if (entries.length === 0) {
+    return {
+      message: `No gameplay entries found for ${GIVEAWAY_DATE_START.format('YYYY-MM-DD')}.`,
+    };
+  }
+
   const winner = getRandomWinner(entries);
-  const amount = getJackpotAmount(entries);
-  const txHash = await sendJackpotToWinner(winner, amount);
-  const message = getMessage(amount, txHash, winner.tg_username);
+  const { txHash, jackpotAmount } = await sendJackpot(winner.address);
+  const message = getMessage(jackpotAmount, txHash, winner.tg_username);
   await sendNotifications(message, entries);
+
   return {
     message: 'Jackpot distributed.',
     winner_tg: winner.tg_username,
-    amount: amount,
+    amount: jackpotAmount,
     tx_hash: txHash,
   };
 }
