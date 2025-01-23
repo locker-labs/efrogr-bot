@@ -130,7 +130,10 @@ async function sendJackpot(recipientAddress: string) {
 
     console.log('Sending jackpot to:', recipientAddress);
 
-    const tx = await tokenContract.transfer(recipientAddress, balance);
+    const tx = await tokenContract.transfer(
+      recipientAddress,
+      ethers.parseUnits(String(balance), 18),
+    );
     console.log('Transaction hash:', tx.hash);
 
     const receipt = await tx.wait();
