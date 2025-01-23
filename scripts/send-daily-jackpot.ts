@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ethers } from 'ethers';
 import { Telegraf, Markup } from 'telegraf';
 
@@ -25,6 +25,7 @@ if (!process.env.RPC_URL) {
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.RPC_URL;
+const bot = new Telegraf(BOT_TOKEN);
 
 const TEXT_LINK = '💵 Play Now 💵';
 const EFROGR_URL = 'https://efrogr.locker.money';
@@ -33,17 +34,19 @@ const days = today.clone().day() === 1 ? 2 : 1;
 const GIVEAWAY_DATE_START = today.clone().subtract(days, 'days').startOf('day');
 const GIVEAWAY_DATE_END = today.clone().subtract(1, 'day').endOf('day');
 
-const getMessage = (
+function getMessage(
   jackpotAmount: number,
   txHash: string,
   winnerTgUsername: string,
-) => `Giveaway ${GIVEAWAY_DATE_START.format('MMM DD, YYYY')} 🎉
+) {
+  return `Giveaway ${GIVEAWAY_DATE_START.format('MMM DD, YYYY')} 🎉
 
 🌟 @${winnerTgUsername} 🌟 won ${addCommasToNumber(jackpotAmount)} CROAK
 Jealous? Play more. 🎮
 
 ===================================
 - Proof: https://lineascan.build/tx/${txHash}`;
+}
 
 async function getJackpotEntries() {
   const { data: entries, error } = await supabase
@@ -58,10 +61,10 @@ async function getJackpotEntries() {
 
   if (error) {
     console.error(
-      'Failed to get players from last day\n',
+      'Failed to get efrogr_plays_stats from db\n',
       JSON.stringify(error),
     );
-    throw new Error('Failed to get players from last day');
+    throw new Error('Failed to get efrogr_plays_stats from db');
   }
 
   if (!entries || entries.length === 0) {
@@ -82,6 +85,10 @@ function getRandomWinner(entries: GameplayEntry[]): GameplayEntry {
   for (const entry of entries) {
     cumulativePlays += entry.num_plays;
     if (randomIndex < cumulativePlays) {
+      console.log(
+        `${GIVEAWAY_DATE_START.format('YYYY-MM-DD')} Winner:`,
+        entry.tg_username,
+      );
       return entry; // Winner found
     }
   }
@@ -96,28 +103,23 @@ function getJackpotAmount(entries: GameplayEntry[]): number {
   }, 0);
 }
 
-const sendNotifications = async (message: string, entries: GameplayEntry[]) => {
-  const bot = new Telegraf(BOT_TOKEN);
-
+async function sendNotifications(message: string, entries: GameplayEntry[]) {
   for (const entry of entries) {
     const tg_id = entry.tg_id;
     try {
-      console.log('Sending message to ', tg_id);
       await bot.telegram.sendMessage(tg_id, message, {
         parse_mode: 'HTML', // Optional, depends on if your message needs Markdown parsing
         reply_markup: Markup.inlineKeyboard([
           Markup.button.webApp(TEXT_LINK, EFROGR_URL),
         ]).reply_markup,
       });
-      // await bot.telegram.sendMessage(id, message);
-      // SEND link to miniapp here
     } catch (error) {
-      console.error(`Failed to send to user ${tg_id}:`, error);
+      console.error(`Failed to send message to tg_id ${tg_id}:`, error);
     }
   }
-};
+}
 
-const sendJackpotToWinner = async (winner: GameplayEntry, amount: number) => {
+async function sendJackpotToWinner(winner: GameplayEntry, amount: number) {
   // TODO: create a db entry to save the jackpot winner?
 
   const recipientAddress = winner.address;
@@ -165,23 +167,22 @@ const sendJackpotToWinner = async (winner: GameplayEntry, amount: number) => {
     process.exit(1);
   }
   return sendTokens();
-};
+}
 
-const distributeJackpot = async () => {
+export async function distributeJackpot() {
+  if (today.clone().day() === 7) {
+    return { message: 'Not to be run on Sunday' };
+  }
   const entries = await getJackpotEntries();
   const winner = getRandomWinner(entries);
   const amount = getJackpotAmount(entries);
   const txHash = await sendJackpotToWinner(winner, amount);
   const message = getMessage(amount, txHash, winner.tg_username);
   await sendNotifications(message, entries);
-};
-
-distributeJackpot()
-  .then(() => {
-    console.info('Jackpot distributed');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Failed to distribute jackpot:', error);
-    process.exit(1);
-  });
+  return {
+    message: 'Jackpot distributed.',
+    winner_tg: winner.tg_username,
+    amount: amount,
+    tx_hash: txHash,
+  };
+}
