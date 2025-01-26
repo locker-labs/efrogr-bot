@@ -17,7 +17,7 @@
   "crons": [
     {
       "path": "/api/distribute-daily-jackpot",
-      "schedule": "0 0 * 1 1-6"
+      "schedule": "0 0 * * 1-6"
     },
     {
       "path": "/api/streaks-payout",
