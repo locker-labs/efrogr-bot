@@ -32,6 +32,7 @@
     "prettier": "prettier --write 'src/**/*.ts'",
     "lint": "tsc --noemit",
     "run:send-daily-jackpot": "dotenv -- nodemon -e ts -x ts-node scripts/send-daily-jackpot.ts",
+    "run:send-streaks-payout": "dotenv -- nodemon -e ts -x ts-node scripts/send-streaks-payout.ts",
     "send:daily-jackpot": "dotenv -- nodemon -e ts -x ts-node scripts/daily-jackpot.ts"
   }
 }

@@ -1,4 +1,4 @@
-import { GameplayEntry } from '../types';
+import { GameplayEntry } from '../lib/types';
 
 export const mockGameplayEntryData: GameplayEntry[] = [
   {

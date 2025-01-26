@@ -3,7 +3,7 @@ import moment from 'moment';
 import { ethers } from 'ethers';
 import { Telegraf, Markup } from 'telegraf';
 
-import supabase from '../lib/db/supabase';
+import supabase from '../db/supabase';
 import { type GameplayEntry } from '../lib/types';
 import { CROAK_ADDRESS, JACKPOT_ADDRESS } from '../lib/constants';
 import { addCommasToNumber } from '../lib/utils';

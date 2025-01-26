@@ -1,27 +1,20 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { startVercel } from '../src';
-import { distributeJackpot } from '../scripts/send-daily-jackpot';
+import { cronHandler } from './cronHandler';
+const cronUrls = ['/api/distribute-daily-jackpot', '/api/streaks-payout'];
 
 export default async function handle(req: VercelRequest, res: VercelResponse) {
   try {
-    if (req.method === 'GET' && req.url === '/api/distribute-daily-jackpot') {
+    if (cronUrls.includes(req.url || '')) {
       const secret = process.env.CRON_SECRET || '';
       const authHeader = req.headers['authorization'];
-
-      if (authHeader !== `Bearer ${secret}`) {
-        res.statusCode = 401;
-        res.setHeader('Content-Type', 'text/html');
-        res.end('<h1>Unauthorized</h1><p>Sorry, you are not authorized</p>');
+      if (authHeader === `Bearer ${secret}` && req.method === 'GET') {
+        await cronHandler(req, res);
         return;
       }
-
-      const messageJson = await distributeJackpot();
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json(messageJson);
-      return;
+    } else {
+      await startVercel(req, res);
     }
-    await startVercel(req, res);
   } catch (e: any) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'text/html');
