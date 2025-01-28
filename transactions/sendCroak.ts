@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { CROAK_ADDRESS, JACKPOT_ADDRESS } from '../lib/constants';
+import { getCroakPrice } from '../lib/utils';
 
 if (!process.env.PRIVATE_KEY) {
   console.error('Please add PRIVATE_KEY to the .env file');
@@ -27,14 +28,17 @@ export async function sendCroak(toAddress: string, amount: number) {
     );
     console.log('Jackpot wallet balance:', balance);
 
+    const tokenPrice = await getCroakPrice();
+    const tokensToSend = Math.trunc(amount / tokenPrice);
+
     if (balance >= amount) {
-      console.log(`Sending ${amount} Croak to: ${toAddress}`);
+      console.log(`Sending ${tokensToSend} Croak to: ${toAddress}`);
 
       const tx = await tokenContract.transfer(
         toAddress,
-        ethers.parseUnits(String(amount), 18),
+        ethers.parseUnits(String(tokensToSend), 18),
       );
-      console.log('Transaction hash:', tx.hash);
+      console.log('Transaction hash:', `https://lineascan.build/tx/${tx.hash}`);
 
       const receipt = await tx.wait();
       console.log('Transaction was mined in block:', receipt.blockNumber);
@@ -42,10 +46,10 @@ export async function sendCroak(toAddress: string, amount: number) {
       return { txHash: tx.hash };
     } else {
       console.error(
-        `Croak balance ${balance} is insufficient to send amount ${amount} to ${toAddress}`,
+        `Jackpot wallet balance ${balance} is insufficient to send ${tokensToSend} CROAK to ${toAddress}`,
       );
     }
   } catch (error) {
-    console.error(`Error in sending ${amount} Croak to ${toAddress}:`, error);
+    console.error(`Error in sending $${amount} Croak to ${toAddress}:`, error);
   }
 }
