@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { distributeJackpot } from '../scripts/send-daily-jackpot';
 import { sendStreakPayouts } from '../scripts/send-streaks-payout';
+import { transferTreasuryToJackpot } from '../scripts/transfer-treasury-to-jackpot';
 
 export async function cronHandler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -12,6 +13,12 @@ export async function cronHandler(req: VercelRequest, res: VercelResponse) {
         .json(messageJson);
     } else if (req.url === '/api/streaks-payout') {
       const messageJson = await sendStreakPayouts();
+      return res
+        .status(200)
+        .setHeader('Content-Type', 'application/json')
+        .json({ messageJson });
+    } else if (req.url === '/api/transfer-treasury-to-jackpot') {
+      const messageJson = await transferTreasuryToJackpot();
       return res
         .status(200)
         .setHeader('Content-Type', 'application/json')

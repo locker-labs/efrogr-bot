@@ -19,8 +19,20 @@ export async function getCroakPrice(): Promise<number> {
       },
     });
     const jsonData = await response.json();
-    return jsonData.data[34137].quote.USD.price;
+    const priceDecimal = jsonData.data[34137].quote.USD.price;
+    const croakPrice = priceDecimal.toFixed(12);
+    console.log(`CROAK price: $${croakPrice}`);
+    return croakPrice;
   } catch (error) {
     throw new Error(`Error in fetching CROAK price: ${error}`);
   }
+}
+
+export async function amountToCroak(amount: number): Promise<number> {
+  const croakPrice: number = await getCroakPrice();
+
+  const croakAmount = Number((amount / croakPrice).toFixed(3));
+  console.log(`CROAK Amount: ${croakAmount}`);
+
+  return croakAmount;
 }
