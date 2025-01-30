@@ -1,7 +1,7 @@
 import { linea, sepolia } from 'viem/chains';
 
 // TODO: change this to the correct chain
-export const CHAIN = sepolia;
+export const CHAIN = linea;
 // set CHAIN based on vercel env
 
 export const BUNDLER_URL = process.env.BUNDLER_URL;
