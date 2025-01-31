@@ -87,6 +87,7 @@ function getRandomWinner(entries: GameplayEntry[]): GameplayEntry {
 
 async function sendNotifications(message: string, entries: GameplayEntry[]) {
   for (const entry of entries) {
+    console.log("SENDING NOTIFICATION TO", entry.tg_username);
     const tg_id = entry.tg_id;
     try {
       await bot.telegram.sendMessage(tg_id, message, {
@@ -149,12 +150,15 @@ async function sendJackpot(recipientAddress: string) {
 }
 
 export async function distributeJackpot() {
+  console.log("DISTRIBUTING JACKPOT");
   if (today.clone().day() === 7) {
+    console.log("Not to be run on Sunday");
     return { message: 'Not to be run on Sunday' };
   }
 
   const entries = await getJackpotEntries();
   if (entries.length === 0) {
+    console.log("No entries found");
     return {
       message: `No gameplay entries found for ${GIVEAWAY_DATE_START.format('YYYY-MM-DD')}.`,
     };
@@ -172,3 +176,5 @@ export async function distributeJackpot() {
     tx_hash: txHash,
   };
 }
+
+distributeJackpot();

@@ -38,6 +38,15 @@ export const DAY_TO_WITHDRAW_AMOUNT: Record<number, number> = {
   6: 30, // Saturday
 };
 
+export const MAX_TO_WITHDRAW_AMOUNT: Record<number, number> = {
+  1: 10000, // Monday
+  2: 10000, // Tuesday
+  3: 10000, // Wednesday
+  4: 10000, // Thursday
+  5: 10000, // Friday
+  6: 30000, // Saturday
+};
+
 export const StreakDaysDesc = Object.keys(STREAK_TO_PAYOUT)
   .map(Number)
   .sort((a, b) => b - a);
