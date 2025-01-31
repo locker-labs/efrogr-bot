@@ -1,28 +1,41 @@
-import { Telegraf } from 'telegraf';
+import { Telegraf, Markup } from 'telegraf';
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 
 const recipients: any = [];
 
 // Marvin
-// const recipients = [1308478915];
+// const recipients = [{ tgid: 1308478915 }];
 const bot = new Telegraf(BOT_TOKEN);
+const TEXT_LINK = '💵 Play Now 💵';
+const EFROGR_URL = 'https://efrogr.locker.money';
 
-const message = `🎮 Efrogr jackpot for Dec 2, 2024. Today's winner has been selected. 🎮
+// 🚀 STREAKS REMINDER 🚀
+// 🗓️ Play Efrogr 7 days in a row and you get GUARANTEED CROAK.
+// ⏫ Keep playing longer, and more guaranteed payout.
 
-1,998.5 CROAK Jackpot 💰
-Congratulations @USERNAME, you are on a lucky streak! 🎉
+// const message = `🆓 FREE CROAK 🆓
+const message = `Giveaway Dec 17, 2024
 
-Thank you for playing during this test phase. Stay tuned for an official launch announcement from Efrogs soon. 🚀
+🌟 @XXX 🌟 won 7,698 CROAK
+Jealous? Play more. 🎮
 
-https://lineascan.build/tx/0x233aa1add51e3a6c0cd05f50fbfa8cd5ffd7dfe9c2f31b57b7d2551a098fd6fc`;
+===================================
+- Proof: https://lineascan.build/tx/0x46535f9a859de72afcf4d80d2ffcad6caaa3d9376267d1821bde0f839c404cfc`;
 
 const sendNotifications = async () => {
   for (const recipient of recipients) {
     const id = recipient.tgid;
     try {
       console.log('Sending message to ', id);
-      await bot.telegram.sendMessage(id, message);
+      await bot.telegram.sendMessage(id, message, {
+        parse_mode: 'HTML', // Optional, depends on if your message needs Markdown parsing
+        reply_markup: Markup.inlineKeyboard([
+          Markup.button.webApp(TEXT_LINK, EFROGR_URL),
+        ]).reply_markup,
+      });
+      // await bot.telegram.sendMessage(id, message);
+      // SEND link to miniapp here
     } catch (error) {
       console.error(`Failed to send to user ${id}:`, error);
     }
