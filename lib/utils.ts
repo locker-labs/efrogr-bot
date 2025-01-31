@@ -9,8 +9,8 @@ export function addCommasToNumber(number: number): string {
 
 export async function getCroakPrice(): Promise<number> {
   try {
-    const url =
-      'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=34137';
+    const cmcTokenId = 34137; // coinmarketcap token id for CROAK on Linea
+    const url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=${cmcTokenId}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -19,7 +19,7 @@ export async function getCroakPrice(): Promise<number> {
       },
     });
     const jsonData = await response.json();
-    const priceDecimal = jsonData.data[34137].quote.USD.price;
+    const priceDecimal = jsonData.data[cmcTokenId].quote.USD.price;
     const croakPrice = priceDecimal.toFixed(12);
     console.log(`CROAK price: $${croakPrice}`);
     return croakPrice;
