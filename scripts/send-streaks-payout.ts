@@ -49,8 +49,10 @@ export async function sendStreakPayouts() {
 
   // send payouts
   for (const [address, payout] of Object.entries(addressToPayout)) {
-    await sendCroak(address, payout);
+    // await sendCroak(address, payout);
   }
 
   return { addressToPayout, streakCount };
 }
+
+// sendStreakPayouts()

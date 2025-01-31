@@ -49,4 +49,4 @@ export const transferTreasuryToJackpot = async () => {
   return { message: 'Treasury to Jackpot transfer initiated', userOpHash };
 };
 
-transferTreasuryToJackpot()
+// transferTreasuryToJackpot()
