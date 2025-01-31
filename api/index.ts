@@ -1,9 +1,20 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { startVercel } from '../src';
+import { cronHandler } from './cronHandler';
+const cronUrls = ['/api/distribute-daily-jackpot', '/api/streaks-payout'];
 
 export default async function handle(req: VercelRequest, res: VercelResponse) {
   try {
-    await startVercel(req, res);
+    if (cronUrls.includes(req.url || '')) {
+      const secret = process.env.CRON_SECRET || '';
+      const authHeader = req.headers['authorization'];
+      if (authHeader === `Bearer ${secret}` && req.method === 'GET') {
+        await cronHandler(req, res);
+        return;
+      }
+    } else {
+      await startVercel(req, res);
+    }
   } catch (e: any) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'text/html');
