@@ -28,10 +28,18 @@ const bot = new Telegraf(BOT_TOKEN);
 
 const TEXT_LINK = '💵 Play Now 💵';
 const EFROGR_URL = 'https://efrogr.locker.money';
+
 const today = moment().utc();
+console.log('Today:', today.toISOString());
+
 const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
+console.log('Days:', days);
+
 const GIVEAWAY_DATE_START = today.clone().subtract(days, 'days').startOf('day');
+console.log('GIVEAWAY_DATE_START:', GIVEAWAY_DATE_START.toISOString());
+
 const GIVEAWAY_DATE_END = today.clone().subtract(1, 'day').endOf('day');
+console.log('GIVEAWAY_DATE_END:', GIVEAWAY_DATE_END.toISOString());
 
 function getMessage(
   jackpotAmount: number,
@@ -53,6 +61,8 @@ async function getJackpotEntries() {
     .select('*')
     .gte('play_date', GIVEAWAY_DATE_START.toISOString())
     .lt('play_date', GIVEAWAY_DATE_END.toISOString());
+
+  console.log('Jackpot Entries:', entries);
 
   if (error) {
     console.error(
@@ -87,7 +97,7 @@ function getRandomWinner(entries: GameplayEntry[]): GameplayEntry {
 
 async function sendNotifications(message: string, entries: GameplayEntry[]) {
   for (const entry of entries) {
-    console.log("SENDING NOTIFICATION TO", entry.tg_username);
+    console.log('SENDING NOTIFICATION TO', entry.tg_username);
     const tg_id = entry.tg_id;
     try {
       await bot.telegram.sendMessage(tg_id, message, {
@@ -150,15 +160,15 @@ async function sendJackpot(recipientAddress: string) {
 }
 
 export async function distributeJackpot() {
-  console.log("DISTRIBUTING JACKPOT");
-  if (today.clone().day() === 7) {
-    console.log("Not to be run on Sunday");
+  console.log('DISTRIBUTING JACKPOT');
+  if (today.clone().day() === 0) {
+    console.log('Not to be run on Sunday');
     return { message: 'Not to be run on Sunday' };
   }
 
   const entries = await getJackpotEntries();
   if (entries.length === 0) {
-    console.log("No entries found");
+    console.log('No entries found');
     return {
       message: `No gameplay entries found for ${GIVEAWAY_DATE_START.format('YYYY-MM-DD')}.`,
     };

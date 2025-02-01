@@ -1,7 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { startVercel } from '../src';
 import { cronHandler } from './cronHandler';
-const cronUrls = ['/api/distribute-daily-jackpot', '/api/streaks-payout'];
+const cronUrls = [
+  '/api/distribute-daily-jackpot',
+  '/api/streaks-payout',
+  '/api/transfer-treasury-to-jackpot',
+];
 
 export default async function handle(req: VercelRequest, res: VercelResponse) {
   try {
