@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import moment from 'moment';
+import moment, { type Moment } from 'moment';
 import { ethers } from 'ethers';
 import { Telegraf, Markup } from 'telegraf';
 
@@ -29,19 +29,8 @@ const bot = new Telegraf(BOT_TOKEN);
 const TEXT_LINK = '💵 Play Now 💵';
 const EFROGR_URL = 'https://efrogr.locker.money';
 
-const today = moment().utc();
-console.log('Today:', today.toISOString());
-
-const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
-console.log('Days:', days);
-
-const GIVEAWAY_DATE_START = today.clone().subtract(days, 'days').startOf('day');
-console.log('GIVEAWAY_DATE_START:', GIVEAWAY_DATE_START.toISOString());
-
-const GIVEAWAY_DATE_END = today.clone().subtract(1, 'day').endOf('day');
-console.log('GIVEAWAY_DATE_END:', GIVEAWAY_DATE_END.toISOString());
-
 function getMessage(
+  GIVEAWAY_DATE_START: Moment,
   jackpotAmount: number,
   txHash: string,
   winnerTgUsername: string,
@@ -55,7 +44,10 @@ Jealous? Play more. 🎮
 - Proof: https://lineascan.build/tx/${txHash}`;
 }
 
-async function getJackpotEntries() {
+async function getJackpotEntries(
+  GIVEAWAY_DATE_START: Moment,
+  GIVEAWAY_DATE_END: Moment,
+) {
   const { data: entries, error } = await supabase
     .from('efrogr_plays_stats')
     .select('*')
@@ -75,7 +67,10 @@ async function getJackpotEntries() {
   return entries as GameplayEntry[];
 }
 
-function getRandomWinner(entries: GameplayEntry[]): GameplayEntry {
+function getRandomWinner(
+  GIVEAWAY_DATE_START: Moment,
+  entries: GameplayEntry[],
+): GameplayEntry {
   const totalPlays = entries.reduce((sum, entry) => sum + entry.num_plays, 0);
   const randomIndex = crypto.randomInt(0, totalPlays);
 
@@ -161,12 +156,30 @@ async function sendJackpot(recipientAddress: string) {
 
 export async function distributeJackpot() {
   console.log('DISTRIBUTING JACKPOT');
+  const today = moment().utc();
+  console.log('Today:', today.toISOString());
+
+  const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
+  console.log('Days:', days);
+
+  const GIVEAWAY_DATE_START = today
+    .clone()
+    .subtract(days, 'days')
+    .startOf('day');
+  console.log('GIVEAWAY_DATE_START:', GIVEAWAY_DATE_START.toISOString());
+
+  const GIVEAWAY_DATE_END = today.clone().subtract(1, 'day').endOf('day');
+  console.log('GIVEAWAY_DATE_END:', GIVEAWAY_DATE_END.toISOString());
+
   if (today.clone().day() === 0) {
     console.log('Not to be run on Sunday');
     return { message: 'Not to be run on Sunday' };
   }
 
-  const entries = await getJackpotEntries();
+  const entries = await getJackpotEntries(
+    GIVEAWAY_DATE_START,
+    GIVEAWAY_DATE_END,
+  );
   if (entries.length === 0) {
     console.log('No entries found');
     return {
@@ -174,9 +187,14 @@ export async function distributeJackpot() {
     };
   }
 
-  const winner = getRandomWinner(entries);
+  const winner = getRandomWinner(GIVEAWAY_DATE_START, entries);
   const { txHash, jackpotAmount } = await sendJackpot(winner.address);
-  const message = getMessage(jackpotAmount, txHash, winner.tg_username);
+  const message = getMessage(
+    GIVEAWAY_DATE_START,
+    jackpotAmount,
+    txHash,
+    winner.tg_username,
+  );
   await sendNotifications(message, entries);
 
   return {
