@@ -2,13 +2,16 @@ import moment from 'moment';
 import { getEfrogrPlaysStats } from '../db/queries';
 import { sendCroak } from '../transactions/sendCroak';
 import { type GameplayEntry } from '../lib/types';
-import { StreakDaysDesc, STREAK_TO_PAYOUT } from '../lib/constants';
-
-const today = moment().utc();
-const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
-const GIVEAWAY_DATE_START = today.clone().subtract(days, 'days').startOf('day');
+import { STREAK_TO_PAYOUT } from '../lib/constants';
 
 export async function sendStreakPayouts() {
+  const today = moment().utc();
+  const days = today.clone().day() === 1 ? 2 : 1; // Giveaway duration, 2 days for Monday, 1 day for rest all days
+  const GIVEAWAY_DATE_START = today
+    .clone()
+    .subtract(days, 'days')
+    .startOf('day');
+
   const stats: GameplayEntry[] = await getEfrogrPlaysStats();
   const day = GIVEAWAY_DATE_START;
 
