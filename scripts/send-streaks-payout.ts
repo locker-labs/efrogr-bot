@@ -1,8 +1,11 @@
 import moment from 'moment';
+import { ethers } from 'ethers';
+import { type Address } from 'viem';
 import { getEfrogrPlaysStats } from '../db/queries';
-import { sendCroak } from '../transactions/sendCroak';
 import { type GameplayEntry } from '../lib/types';
-import { STREAK_TO_PAYOUT } from '../lib/constants';
+import { CROAK_ADDRESS, STREAK_TO_PAYOUT } from '../lib/constants';
+import { getCroakPrice } from '../lib/utils';
+import sendUserOp from '../lib/zerodev/sendUserOp';
 
 export async function sendStreakPayouts() {
   const today = moment().utc();
@@ -15,8 +18,9 @@ export async function sendStreakPayouts() {
   const stats: GameplayEntry[] = await getEfrogrPlaysStats();
   const day = GIVEAWAY_DATE_START;
 
-  const streakCount: Record<string, number> = {};
-  const addressToPayout: Record<string, number> = {};
+  const streakCount: Record<Address, number> = {};
+  const addressToPayout: Record<Address, number> = {};
+  const addressToPayoutBigInt: Record<Address, bigint> = {};
 
   let expectedStreak = 0;
   let entriesOnDay;
@@ -44,18 +48,33 @@ export async function sendStreakPayouts() {
   // now we have the streak count for each user
   for (const [address, streak] of Object.entries(streakCount)) {
     if (STREAK_TO_PAYOUT[streak]) {
-      addressToPayout[address] = STREAK_TO_PAYOUT[streak];
+      addressToPayout[address as Address] = STREAK_TO_PAYOUT[streak];
     }
   }
 
   console.log('addressToPayout', addressToPayout);
 
-  // send payouts
-  for (const [address, payout] of Object.entries(addressToPayout)) {
-    // await sendCroak(address, payout);
+  if (Object.entries(addressToPayout).length === 0) {
+    console.log('No streak payouts to send');
+    return { addressToPayout, streakCount };
   }
 
-  return { addressToPayout, streakCount };
+  const tokenPrice = await getCroakPrice();
+
+  for (const [address, payout] of Object.entries(addressToPayout)) {
+    const tokensToSend = Math.trunc(payout / tokenPrice);
+    const tokensBigInt = ethers.parseUnits(String(tokensToSend), 18);
+    addressToPayoutBigInt[address as Address] = tokensBigInt;
+  }
+
+  console.log('addressToPayoutBigInt', addressToPayoutBigInt);
+
+  const userOpHash = await sendUserOp(
+    CROAK_ADDRESS as Address,
+    addressToPayoutBigInt,
+  );
+
+  return { addressToPayout, streakCount, userOpHash };
 }
 
 // sendStreakPayouts()

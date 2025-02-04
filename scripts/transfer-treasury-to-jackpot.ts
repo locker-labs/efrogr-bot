@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { type Address } from 'viem';
 import moment from 'moment';
 import {
   CROAK_ADDRESS,
@@ -10,11 +11,9 @@ import { amountToCroak } from '../lib/utils';
 import sendUserOp from '../lib/zerodev/sendUserOp';
 
 const withdrawAsOwner = async (amount: bigint) => {
-  return await sendUserOp(
-    JACKPOT_ADDRESS as `0x${string}`,
-    CROAK_ADDRESS as `0x${string}`,
-    amount,
-  );
+  const payouts: Record<Address, bigint> = {};
+  payouts[JACKPOT_ADDRESS as Address] = amount;
+  return await sendUserOp(CROAK_ADDRESS as Address, payouts);
 };
 
 export const transferTreasuryToJackpot = async () => {
@@ -42,7 +41,9 @@ export const transferTreasuryToJackpot = async () => {
   const croakAmount = await amountToCroak(withdrawAmount);
   const cappedCroakAmount = Math.min(croakAmount, maxWithdrawAmount);
   console.log('cappedCroakAmount', cappedCroakAmount);
-  const croakAmountBigInt = BigInt(ethers.parseUnits(String(cappedCroakAmount), 18));
+  const croakAmountBigInt = BigInt(
+    ethers.parseUnits(String(cappedCroakAmount), 18),
+  );
   console.log('croakAmountBigInt', croakAmountBigInt);
   const userOpHash = await withdrawAsOwner(croakAmountBigInt);
 
