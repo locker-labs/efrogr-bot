@@ -31,7 +31,7 @@ export async function sendCroak(toAddress: string, amount: number) {
     const tokenPrice = await getCroakPrice();
     const tokensToSend = Math.trunc(amount / tokenPrice);
 
-    if (balance >= amount) {
+    if (balance >= tokensToSend) {
       console.log(`Sending ${tokensToSend} Croak to: ${toAddress}`);
 
       const tx = await tokenContract.transfer(

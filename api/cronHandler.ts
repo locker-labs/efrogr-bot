@@ -6,7 +6,9 @@ import { transferTreasuryToJackpot } from '../scripts/transfer-treasury-to-jackp
 export async function cronHandler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.url === '/api/distribute-daily-jackpot') {
-      const messageJson = await distributeJackpot();
+      const distributeJackpotMsg = await distributeJackpot();
+      const treasuryTransferMsg = await transferTreasuryToJackpot();
+      const messageJson = { distributeJackpotMsg, treasuryTransferMsg };
       return res
         .status(200)
         .setHeader('Content-Type', 'application/json')
@@ -17,12 +19,6 @@ export async function cronHandler(req: VercelRequest, res: VercelResponse) {
         .status(200)
         .setHeader('Content-Type', 'application/json')
         .json({ messageJson });
-    } else if (req.url === '/api/transfer-treasury-to-jackpot') {
-      const messageJson = await transferTreasuryToJackpot();
-      return res
-        .status(200)
-        .setHeader('Content-Type', 'application/json')
-        .json(messageJson);
     }
   } catch (e: any) {
     res.statusCode = 500;
