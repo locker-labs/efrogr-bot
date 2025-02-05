@@ -28,7 +28,6 @@ const entryPoint = getEntryPoint('0.7');
 const kernelVersion = KERNEL_V3_1;
 
 const publicClient = createPublicClient({
-  // TODO: In production, you will want to set your RPC provider here (e.g. Infura/Alchemy).
   transport: http(RPC_URL),
   chain: CHAIN,
 });
@@ -41,9 +40,8 @@ const signer = privateKeyToAccount(`0x${PRIVATE_KEY}`);
 // Constructs and submits userOp to send token out of SCA
 // ************************************************************* //
 const sendUserOp = async (
-  recipient: Address,
   token: Address,
-  amount: bigint,
+  payouts: Record<Address, bigint>,
 ): Promise<Address | undefined> => {
   const ecdsaValidator = await signerToEcdsaValidator(
     publicClient as PublicClient,
@@ -99,35 +97,35 @@ const sendUserOp = async (
       token === zeroAddress ||
       token === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
     ) {
-      const sendParams = {
-        to: recipient,
-        value: amount,
-        data: '0x00000000', // default to 0x
-      } as {
-        to: Address;
-        value: bigint;
-        data: Hex;
-      };
-
       // Native token
-      hash = await kernelAccountClient.sendTransaction({
-        calls: [sendParams],
-      });
+      const calls = Object.entries(payouts).map(
+        ([recipient, amount]) =>
+          ({
+            to: recipient,
+            value: amount,
+            data: '0x00000000', // default to 0x
+          }) as {
+            to: Address;
+            value: bigint;
+            data: Hex;
+          },
+      );
+
+      hash = await kernelAccountClient.sendTransaction({ calls });
     } else {
       // ERC-20 token
-      console.log({ token, recipient, amount });
+      const calls = Object.entries(payouts).map(([recipient, amount]) => ({
+        to: token,
+        value: BigInt(0),
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [recipient as Address, amount],
+        }),
+      }));
+
       hash = await kernelAccountClient.sendUserOperation({
-        callData: await kernelAccountObj.encodeCalls([
-          {
-            to: token,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: erc20Abi,
-              functionName: 'transfer',
-              args: [recipient, amount],
-            }),
-          },
-        ]),
+        callData: await kernelAccountObj.encodeCalls(calls),
       });
     }
 
