@@ -50,3 +50,7 @@ export const MAX_TO_WITHDRAW_AMOUNT: Record<number, number> = {
 export const StreakDaysDesc = Object.keys(STREAK_TO_PAYOUT)
   .map(Number)
   .sort((a, b) => b - a);
+
+export const CroakGroupId = process.env.CROAK_GROUP_ID!;
+console.log('CROAK_GROUP_ID', CroakGroupId);
+if (!CroakGroupId) throw new Error('CROAK_GROUP_ID is not set');

@@ -5,7 +5,7 @@ import { Telegraf, Markup } from 'telegraf';
 
 import supabase from '../db/supabase';
 import { type GameplayEntry } from '../lib/types';
-import { CROAK_ADDRESS, JACKPOT_ADDRESS } from '../lib/constants';
+import { CROAK_ADDRESS, CroakGroupId, JACKPOT_ADDRESS } from '../lib/constants';
 import { addCommasToNumber } from '../lib/utils';
 
 if (!process.env.BOT_TOKEN) {
@@ -107,6 +107,14 @@ async function sendNotifications(message: string, entries: GameplayEntry[]) {
   }
 }
 
+async function sendGroupNotification(message: string) {
+  try {
+    await bot.telegram.sendMessage(CroakGroupId, message);
+  } catch (error) {
+    console.error(`Failed to send message to chat_id ${CroakGroupId}:`, error);
+  }
+}
+
 async function sendJackpot(recipientAddress: string) {
   // TODO: create a db entry to save the jackpot winner?
   try {
@@ -196,6 +204,7 @@ export async function distributeJackpot() {
     winner.tg_username,
   );
   await sendNotifications(message, entries);
+  await sendGroupNotification(message);
 
   return {
     message: 'Jackpot distributed.',
