@@ -5,7 +5,7 @@ import { Telegraf, Markup } from 'telegraf';
 
 import supabase from '../db/supabase';
 import { type GameplayEntry } from '../lib/types';
-import { CROAK_ADDRESS, JACKPOT_ADDRESS } from '../lib/constants';
+import { CROAK_ADDRESS, CroakGroupId, JACKPOT_ADDRESS } from '../lib/constants';
 import { addCommasToNumber } from '../lib/utils';
 
 if (!process.env.BOT_TOKEN) {
@@ -41,6 +41,26 @@ function getMessage(
 Jealous? Play more. 🎮
 
 ===================================
+- Proof: https://lineascan.build/tx/${txHash}`;
+}
+
+function getGroupMessage(
+  GIVEAWAY_DATE_START: Moment,
+  jackpotAmount: number,
+  txHash: string,
+  winnerTgUsername: string,
+) {
+  return `🐸 Efrogr Sweepstakes Winner - ${GIVEAWAY_DATE_START.format('MMM DD, YYYY')}
+
+🏆 @${winnerTgUsername} won ${addCommasToNumber(jackpotAmount)} $CROAK 🐸
+
+Efrogr - @EfrogrBot is a Play To Earn tg mini-game where you can win daily and weekly jackpot rewards.
+Compete with other Croaksters and win $CROAK 🤑
+
+❓How to play? - Efrogr Demo
+
+ =======================================
+
 - Proof: https://lineascan.build/tx/${txHash}`;
 }
 
@@ -104,6 +124,14 @@ async function sendNotifications(message: string, entries: GameplayEntry[]) {
     } catch (error) {
       console.error(`Failed to send message to tg_id ${tg_id}:`, error);
     }
+  }
+}
+
+async function sendGroupNotification(message: string) {
+  try {
+    await bot.telegram.sendMessage(CroakGroupId, message);
+  } catch (error) {
+    console.error(`Failed to send message to chat_id ${CroakGroupId}:`, error);
   }
 }
 
@@ -196,6 +224,14 @@ export async function distributeJackpot() {
     winner.tg_username,
   );
   await sendNotifications(message, entries);
+  await sendGroupNotification(
+    getGroupMessage(
+      GIVEAWAY_DATE_START,
+      jackpotAmount,
+      txHash,
+      winner.tg_username,
+    ),
+  );
 
   return {
     message: 'Jackpot distributed.',
